@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EvalForge — Agent Evaluation Harness</title>
+  <meta name="description" content="Write repeatable, measurable evals for AI agents. Score with exact match, fuzzy, LLM-as-judge, or custom functions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a; --bg-card: #0f0f0f; --bg-elevated: #111111;
+      --border: #1a1a1a; --border-hover: #2a2a2a;
+      --text: #e0e0e0; --text-dim: #666666; --text-muted: #444444;
+      --accent: #ff8800; --accent-dim: rgba(255,136,0,0.08);
+      --green: #00ff88; --cyan: #00d4ff;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-body: 'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; -webkit-font-smoothing:antialiased; }
+    body { font-family:var(--font-body); background:var(--bg); color:var(--text); line-height:1.6; }
+    a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+    code, pre { font-family:var(--font-mono); }
+    .container { max-width:860px; margin:0 auto; padding:0 2rem; }
+    .nav { position:sticky; top:0; z-index:100; padding:0 2rem; backdrop-filter:blur(12px); background:rgba(10,10,10,0.85); border-bottom:1px solid var(--border); }
+    .nav-inner { max-width:860px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; height:56px; }
+    .nav-brand { font-family:var(--font-mono); font-size:0.95rem; font-weight:600; color:var(--text); }
+    .nav-brand .accent { color:var(--accent); }
+    .nav-links { display:flex; gap:1.5rem; }
+    .nav-links a { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-dim); }
+    .nav-links a:hover { color:var(--accent); text-decoration:none; }
+    .hero { padding:5rem 0 3rem; border-bottom:1px solid var(--border); }
+    .hero-icon { width:80px; height:80px; border-radius:14px; margin-bottom:1.5rem; }
+    .hero h1 { font-family:var(--font-mono); font-size:2.2rem; font-weight:700; letter-spacing:-0.03em; margin-bottom:0.5rem; }
+    .hero .tagline { font-size:1.1rem; color:var(--text-dim); margin-bottom:2rem; }
+    .hero-badges { display:flex; gap:0.5rem; flex-wrap:wrap; }
+    .badge { font-family:var(--font-mono); font-size:0.72rem; padding:0.3rem 0.8rem; border:1px solid var(--border); border-radius:100px; color:var(--text-dim); }
+    .install { padding:3rem 0; border-bottom:1px solid var(--border); }
+    .install h2 { font-family:var(--font-mono); font-size:1.3rem; margin-bottom:1.5rem; color:var(--accent); }
+    .install-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+    @media(max-width:600px) { .install-grid { grid-template-columns:1fr; } }
+    .install-block h3 { font-family:var(--font-mono); font-size:0.85rem; color:var(--text-dim); margin-bottom:0.5rem; }
+    pre { background:var(--bg-elevated); border:1px solid var(--border); border-radius:8px; padding:1rem 1.2rem; overflow-x:auto; font-size:0.82rem; line-height:1.7; }
+    pre .prompt { color:var(--accent); user-select:none; }
+    pre .cmd { color:var(--cyan); }
+    pre .comment { color:var(--text-muted); }
+    .doc-section { padding:3rem 0; border-bottom:1px solid var(--border); }
+    .doc-section:last-of-type { border-bottom:none; }
+    .doc-section h2 { font-family:var(--font-mono); font-size:1.3rem; margin-bottom:1.5rem; color:var(--accent); }
+    .doc-section h3 { font-family:var(--font-mono); font-size:1rem; margin:1.5rem 0 0.75rem; color:var(--text); }
+    .doc-section p { color:var(--text-dim); margin-bottom:1rem; font-size:0.95rem; }
+    .doc-section ul { margin-bottom:1rem; padding-left:0; list-style:none; }
+    .doc-section li { font-size:0.9rem; color:var(--text-dim); padding:0.25rem 0 0.25rem 1.2rem; position:relative; }
+    .doc-section li::before { content:'>'; position:absolute; left:0; font-family:var(--font-mono); color:var(--accent); font-size:0.8rem; }
+    .api-table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.85rem; }
+    .api-table th { text-align:left; font-family:var(--font-mono); font-weight:600; padding:0.6rem 1rem; border-bottom:2px solid var(--border); color:var(--text); font-size:0.78rem; text-transform:uppercase; letter-spacing:0.06em; }
+    .api-table td { padding:0.6rem 1rem; border-bottom:1px solid var(--border); vertical-align:top; }
+    .api-table td:first-child { font-family:var(--font-mono); color:var(--cyan); white-space:nowrap; font-size:0.82rem; }
+    .api-table td:last-child { color:var(--text-dim); }
+    .api-table tr:hover { background:rgba(255,255,255,0.02); }
+    .footer { padding:3rem 0; text-align:center; border-top:1px solid var(--border); }
+    .footer p { font-size:0.82rem; color:var(--text-muted); }
+    .footer a { color:var(--accent); }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="https://speed785.github.io" class="nav-brand"><span class="accent">[</span>speed785<span class="accent">]</span> / evalforge</a>
+      <div class="nav-links">
+        <a href="#install">Install</a>
+        <a href="#usage">Usage</a>
+        <a href="#api">API</a>
+        <a href="https://github.com/speed785/evalforge">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <section class="hero">
+      <svg class="hero-icon" viewBox="0 0 512 512" width="80" height="80">
+        <defs><radialGradient id="ef-bg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#141414"/><stop offset="100%" stop-color="#0a0a0a"/></radialGradient><filter id="ef-g"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+        <rect width="512" height="512" rx="64" fill="url(#ef-bg)"/>
+        <g transform="translate(256,310)"><path d="M-100,-20 L-80,-40 L80,-40 L100,-20 L120,-20 L120,0 L-120,0 L-120,-20 Z" fill="#ff8800" opacity="0.9"/><rect x="-80" y="0" width="160" height="60" fill="#885500" opacity="0.6"/><rect x="-100" y="60" width="200" height="16" rx="4" fill="#884400" opacity="0.7"/></g>
+        <g filter="url(#ef-g)"><polyline points="220,280 248,310 296,255" fill="none" stroke="#00ff88" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g><circle cx="280" cy="220" r="3" fill="#00ff88" opacity="0.9"/><circle cx="310" cy="200" r="2.5" fill="#00ff88" opacity="0.8"/><circle cx="265" cy="190" r="3" fill="#ff8800" opacity="0.85"/><circle cx="240" cy="200" r="2" fill="#ffaa33" opacity="0.7"/><circle cx="270" cy="205" r="1.5" fill="#fff" opacity="0.9"/></g>
+      </svg>
+      <h1>evalforge</h1>
+      <p class="tagline">Agent evaluation harness &mdash; repeatable evals, regression detection, CI-ready</p>
+      <div class="hero-badges">
+        <span class="badge">Python 3.10+</span>
+        <span class="badge">TypeScript 5.4+</span>
+        <span class="badge">MIT License</span>
+        <span class="badge">Provider Agnostic</span>
+      </div>
+    </section>
+
+    <section class="doc-section">
+      <p><strong>EvalForge</strong> is a standalone, provider-agnostic harness that lets you define test cases, run any agent against them, score results with multiple strategies, generate reports, and track regressions over time. No vendor lock-in. No hidden magic. Just clean, composable eval primitives.</p>
+    </section>
+
+    <section class="install" id="install">
+      <h2># Install</h2>
+      <div class="install-grid">
+        <div class="install-block">
+          <h3>Python</h3>
+          <pre><span class="prompt">$</span> pip install evalforge
+<span class="comment"># With all extras:</span>
+<span class="prompt">$</span> pip install "evalforge[all]"</pre>
+        </div>
+        <div class="install-block">
+          <h3>TypeScript / Node.js</h3>
+          <pre><span class="prompt">$</span> npm install evalforge</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-section" id="usage">
+      <h2># Quick Start</h2>
+
+      <h3>Python</h3>
+      <pre>from evalforge import EvalHarness, TestCase
+from evalforge.scorer import fuzzy_match, exact_match
+
+def my_agent(prompt: str) -> str:
+    return "The capital of France is Paris."
+
+harness = EvalHarness(agent=my_agent, suite_name="geo-smoke")
+
+harness.add(TestCase(
+    id="france-capital",
+    description="Knows EU capitals",
+    input="What is the capital of France?",
+    expected_output="Paris",
+    scoring=fuzzy_match(threshold=0.8),
+    tags=["geography"],
+))
+
+result = harness.run(report_html="reports/run.html")
+<span class="comment"># Prints a rich table to the terminal</span>
+<span class="comment"># Saves an HTML report to reports/run.html</span></pre>
+
+      <h3>TypeScript</h3>
+      <pre>import { EvalHarness, TestCase } from "evalforge";
+import { fuzzyMatch } from "evalforge/scorer";
+
+const harness = new EvalHarness({
+  agent: async (input) => "The capital of France is Paris.",
+  suiteName: "geo-smoke",
+});
+
+harness.add(new TestCase({
+  id: "france-capital",
+  input: "What is the capital of France?",
+  expectedOutput: "Paris",
+  scoring: fuzzyMatch(0.8),
+  tags: ["geography"],
+}));
+
+const result = await harness.run({ reportHtml: "reports/run.html" });</pre>
+
+      <h3>Regression Tracking</h3>
+      <pre>harness = EvalHarness(
+    agent=my_agent,
+    suite_name="my-suite",
+    history_path="eval_history.jsonl",   <span class="comment"># appends every run</span>
+)
+result = harness.run()
+
+<span class="comment"># Or use RegressionTracker directly:</span>
+from evalforge.reporter import RegressionTracker
+tracker = RegressionTracker("eval_history.jsonl")
+regressions = tracker.compare_and_save(result)
+if regressions:
+    print(f"Regressions: {regressions}")</pre>
+    </section>
+
+    <section class="doc-section" id="api">
+      <h2># Scoring Strategies</h2>
+      <table class="api-table">
+        <thead><tr><th>Strategy</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>exact</td><td>Exact string equality (default)</td></tr>
+          <tr><td>fuzzy</td><td>Levenshtein / token similarity</td></tr>
+          <tr><td>contains</td><td>Expected is a substring of actual</td></tr>
+          <tr><td>json_match</td><td>Deep-compare JSON structures (with key ignore)</td></tr>
+          <tr><td>llm_judge</td><td>Use an LLM to score correctness (0-1)</td></tr>
+          <tr><td>custom</td><td>Bring your own scoring function</td></tr>
+        </tbody>
+      </table>
+
+      <h2># Report Formats</h2>
+      <table class="api-table">
+        <thead><tr><th>Format</th><th>Usage</th></tr></thead>
+        <tbody>
+          <tr><td>Console (rich)</td><td>harness.run() &mdash; verbose table by default</td></tr>
+          <tr><td>JSON</td><td>harness.run(report_json="out/results.json")</td></tr>
+          <tr><td>HTML</td><td>harness.run(report_html="out/results.html")</td></tr>
+        </tbody>
+      </table>
+
+      <h2># EvalHarness API</h2>
+      <table class="api-table">
+        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>EvalHarness(agent, suite_name, ...)</td><td>Create a harness with an agent function</td></tr>
+          <tr><td>.add(test_case)</td><td>Add a test case to the suite</td></tr>
+          <tr><td>.run(**kwargs)</td><td>Run all test cases and generate reports</td></tr>
+          <tr><td>TestCase(id, input, expected_output, scoring, ...)</td><td>Define a test case with scoring criteria</td></tr>
+        </tbody>
+      </table>
+
+      <h2># Registry</h2>
+      <pre><span class="comment"># Register reusable suites and agents</span>
+from evalforge.registry import registry
+
+@registry.suite("support-faq")
+def support_faq():
+    return [TestCase(id="refund", input="What is your refund policy?",
+                     expected_output="30-day", scoring=contains_match())]
+
+@registry.agent("support-bot")
+async def support_bot(prompt):
+    return "We offer a 30-day money back guarantee."
+
+<span class="comment"># Run by name</span>
+result = asyncio.run(registry.run("support-faq", "support-bot"))</pre>
+    </section>
+
+    <section class="doc-section">
+      <h2># Key Features</h2>
+      <ul>
+        <li>6 scoring strategies (exact, fuzzy, contains, JSON, LLM judge, custom)</li>
+        <li>Regression tracking across runs with JSONL history</li>
+        <li>HTML, JSON, and console report generation</li>
+        <li>Provider-agnostic &mdash; works with any LLM or agent</li>
+        <li>Registry for reusable test suites and agents</li>
+        <li>OpenAI &amp; Anthropic integrations for LLM-as-judge</li>
+        <li>Async runner with timeout and retry support</li>
+      </ul>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <p><a href="https://speed785.github.io">speed785.github.io</a> &middot; <a href="https://github.com/speed785/evalforge">GitHub</a> &middot; MIT License</p>
+    </div>
+  </footer>
+
+</body>
+</html>
