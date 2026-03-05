@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta:__legacy__"
+
+[project]
+name = "evalforge"
+version = "0.1.0"
+description = "Agent Evaluation Harness — repeatable, measurable evals for AI agents"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = [
+  "ai",
+  "agent",
+  "llm",
+  "evaluation",
+  "evals",
+  "testing",
+  "benchmarking",
+  "regression",
+  "openai",
+  "anthropic",
+  "ci",
+  "quality-assurance",
+  "llm-eval",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Testing",
+]
+dependencies = ["aiohttp>=3.9"]
+
+[project.optional-dependencies]
+fuzzy = ["rapidfuzz>=3.0"]
+openai = ["openai>=1.0"]
+anthropic = ["anthropic>=0.25"]
+rich = ["rich>=13.0"]
+all = ["rapidfuzz>=3.0", "openai>=1.0", "anthropic>=0.25", "rich>=13.0"]
+
+[project.urls]
+Homepage = "https://speed785.github.io/evalforge"
+Documentation = "https://speed785.github.io/evalforge"
+Repository = "https://github.com/speed785/evalforge"
+Issues = "https://github.com/speed785/evalforge/issues"
+Changelog = "https://github.com/speed785/evalforge/blob/main/CHANGELOG.md"
+
+[tool.pytest.ini_options]
+addopts = "--cov=evalforge --cov-fail-under=100"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = false
+ignore_missing_imports = true

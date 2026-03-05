@@ -4,7 +4,7 @@
   <p><strong>Agent evaluation harness — repeatable evals, regression detection, CI-ready</strong></p>
 
   [![CI](https://github.com/speed785/evalforge/actions/workflows/ci.yml/badge.svg)](https://github.com/speed785/evalforge/actions/workflows/ci.yml)
-  [![Coverage](https://codecov.io/gh/speed785/evalforge/branch/main/graph/badge.svg)](https://codecov.io/gh/speed785/evalforge)
+  [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/speed785/evalforge)
   [![PyPI](https://img.shields.io/pypi/v/evalforge)](https://pypi.org/project/evalforge/)
   [![npm](https://img.shields.io/npm/v/evalforge)](https://www.npmjs.com/package/evalforge)
   [![Python](https://img.shields.io/badge/python-3.9+-blue)](https://python.org)
