@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="ef-bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#141414"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </radialGradient>
+    <linearGradient id="ef-anvil" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8800"/>
+      <stop offset="100%" stop-color="#cc6600"/>
+    </linearGradient>
+    <linearGradient id="ef-hammer" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffaa33"/>
+      <stop offset="100%" stop-color="#ff8800"/>
+    </linearGradient>
+    <filter id="ef-glow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="ef-glow-lg">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="ef-spark-glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="url(#ef-bg)"/>
+  
+  <!-- Anvil -->
+  <g filter="url(#ef-glow)" transform="translate(256,310)">
+    <!-- Anvil face (top) -->
+    <path d="M-100,-20 L-80,-40 L80,-40 L100,-20 L120,-20 L120,0 L-120,0 L-120,-20 Z" 
+          fill="url(#ef-anvil)" opacity="0.9"/>
+    <!-- Anvil horn (right) -->
+    <path d="M100,-20 L140,-30 L140,-20 L120,-20 Z" fill="#cc6600" opacity="0.8"/>
+    <!-- Anvil body -->
+    <path d="M-100,0 L-80,0 L-70,60 L-100,60 Z" fill="#994400" opacity="0.8"/>
+    <path d="M100,0 L80,0 L70,60 L100,60 Z" fill="#994400" opacity="0.8"/>
+    <rect x="-100" y="60" width="200" height="16" rx="4" fill="#884400" opacity="0.7"/>
+    <!-- Anvil base -->
+    <rect x="-80" y="0" width="160" height="60" fill="#885500" opacity="0.6"/>
+    
+    <!-- Highlight line -->
+    <line x1="-80" y1="-40" x2="80" y2="-40" stroke="#ffcc88" stroke-width="1" opacity="0.5"/>
+  </g>
+  
+  <!-- Hammer (angled, striking down) -->
+  <g transform="translate(310,160) rotate(35)">
+    <!-- Handle -->
+    <rect x="-6" y="-100" width="12" height="120" rx="3" fill="#996633" opacity="0.8"/>
+    
+    <!-- Hammer head -->
+    <g filter="url(#ef-glow)">
+      <rect x="-32" y="16" width="64" height="36" rx="6" fill="url(#ef-hammer)" opacity="0.9"/>
+      <!-- Face highlight -->
+      <rect x="-32" y="44" width="64" height="8" rx="3" fill="#ffbb44" opacity="0.4"/>
+    </g>
+  </g>
+  
+  <!-- Checkmark on the anvil (being forged) -->
+  <g filter="url(#ef-glow-lg)">
+    <polyline points="220,280 248,310 296,255" 
+             fill="none" stroke="#00ff88" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Checkmark inner glow -->
+  <polyline points="220,280 248,310 296,255" 
+           fill="none" stroke="#88ffbb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
+  
+  <!-- Sparks flying from impact point -->
+  <g filter="url(#ef-spark-glow)">
+    <!-- Green sparks (checkmark sparks) -->
+    <circle cx="280" cy="220" r="3" fill="#00ff88" opacity="0.9"/>
+    <circle cx="310" cy="200" r="2.5" fill="#00ff88" opacity="0.8"/>
+    <circle cx="340" cy="210" r="2" fill="#00ff88" opacity="0.7"/>
+    <circle cx="320" cy="185" r="3" fill="#00ff88" opacity="0.85"/>
+    <circle cx="350" cy="195" r="1.5" fill="#00ff88" opacity="0.6"/>
+    <circle cx="295" cy="195" r="2" fill="#00ff88" opacity="0.75"/>
+    
+    <!-- Orange sparks -->
+    <circle cx="250" cy="210" r="2.5" fill="#ff8800" opacity="0.8"/>
+    <circle cx="230" cy="200" r="2" fill="#ffaa33" opacity="0.7"/>
+    <circle cx="265" cy="190" r="3" fill="#ff8800" opacity="0.85"/>
+    <circle cx="240" cy="185" r="1.5" fill="#ffaa33" opacity="0.65"/>
+    <circle cx="215" cy="215" r="2" fill="#ff8800" opacity="0.6"/>
+    
+    <!-- Tiny white-hot sparks -->
+    <circle cx="270" cy="205" r="1.5" fill="#ffffff" opacity="0.9"/>
+    <circle cx="285" cy="195" r="1" fill="#ffffff" opacity="0.7"/>
+    <circle cx="258" cy="198" r="1" fill="#ffffff" opacity="0.8"/>
+  </g>
+  
+  <!-- Spark trails -->
+  <g stroke-width="1" opacity="0.3" fill="none">
+    <path d="M280 230 Q290 215 280 220" stroke="#00ff88"/>
+    <path d="M310 230 Q325 200 310 200" stroke="#00ff88"/>
+    <path d="M250 230 Q240 210 250 210" stroke="#ff8800"/>
+    <path d="M265 230 Q270 195 265 190" stroke="#ff8800"/>
+    <path d="M295 230 Q310 190 320 185" stroke="#00ff88"/>
+    <path d="M230 230 Q220 205 230 200" stroke="#ffaa33"/>
+  </g>
+  
+  <!-- Heat glow at impact -->
+  <ellipse cx="275" cy="240" rx="40" ry="12" fill="#ff8800" opacity="0.08"/>
+  <ellipse cx="275" cy="240" rx="25" ry="8" fill="#ffaa33" opacity="0.06"/>
+</svg>
