@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a1a" stroke-width="0.5"/>
+    </pattern>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="iconGlow" cx="256" cy="320" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff8800" stop-opacity="0.18"/>
+      <stop offset="50%" stop-color="#ff8800" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#ff8800" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.04"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" mode="overlay"/>
+    </filter>
+    <linearGradient id="anvilGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff8800" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ff8800" stop-opacity="0.03"/>
+    </linearGradient>
+    <!-- Ember particle effect -->
+    <radialGradient id="ember">
+      <stop offset="0%" stop-color="#ff8800" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ff8800" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="#0d0d0d"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+
+  <!-- Ambient glow -->
+  <ellipse cx="256" cy="320" rx="320" ry="300" fill="url(#iconGlow)"/>
+
+  <!-- Top/bottom accents -->
+  <rect x="0" y="0" width="1280" height="2" fill="#ff8800" opacity="0.5"/>
+  <rect x="0" y="638" width="1280" height="2" fill="#ff8800" opacity="0.12"/>
+
+  <!-- === LEFT: Anvil + Checkmark icon === -->
+
+  <!-- Anvil base (wide) -->
+  <g filter="url(#glow)">
+    <path d="M 175 420 L 340 420 L 355 450 L 160 450 Z" fill="url(#anvilGrad)" stroke="#ff8800" stroke-width="2"/>
+  </g>
+
+  <!-- Anvil body -->
+  <g filter="url(#softGlow)">
+    <path d="M 195 350 L 320 350 L 340 420 L 175 420 Z" fill="#0d0d0d" stroke="#ff8800" stroke-width="2"/>
+  </g>
+
+  <!-- Anvil top face -->
+  <path d="M 205 350 L 310 350 L 310 340 Q 310 310 290 310 L 230 310 Q 200 310 205 340 Z" 
+        fill="#0d0d0d" stroke="#ff8800" stroke-width="2"/>
+
+  <!-- Anvil horn (pointed end) -->
+  <path d="M 310 340 L 380 330 L 380 340 L 310 350" fill="#0d0d0d" stroke="#ff8800" stroke-width="1.5" opacity="0.8"/>
+
+  <!-- Anvil heel (back step) -->
+  <path d="M 205 340 L 175 340 L 175 355 L 195 355" fill="#0d0d0d" stroke="#ff8800" stroke-width="1.5" opacity="0.8"/>
+
+  <!-- Surface detail lines -->
+  <line x1="210" y1="380" x2="305" y2="380" stroke="#ff8800" stroke-width="0.5" opacity="0.15"/>
+  <line x1="205" y1="395" x2="310" y2="395" stroke="#ff8800" stroke-width="0.5" opacity="0.1"/>
+
+  <!-- Large checkmark floating above anvil -->
+  <g filter="url(#glow)" transform="translate(230, 210)">
+    <path d="M 0 30 L 18 50 L 55 5" fill="none" stroke="#ff8800" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Sparks / embers rising from anvil -->
+  <g fill="#ff8800">
+    <circle cx="250" cy="290" r="2.5" opacity="0.5"/>
+    <circle cx="270" cy="275" r="1.5" opacity="0.4"/>
+    <circle cx="240" cy="265" r="2" opacity="0.3"/>
+    <circle cx="280" cy="255" r="1" opacity="0.5"/>
+    <circle cx="255" cy="245" r="1.5" opacity="0.25"/>
+    <circle cx="265" cy="230" r="1" opacity="0.2"/>
+    <circle cx="295" cy="280" r="1.5" opacity="0.35"/>
+    <circle cx="225" cy="280" r="1" opacity="0.3"/>
+  </g>
+
+  <!-- Heat shimmer lines -->
+  <g stroke="#ff8800" stroke-width="0.5" fill="none" opacity="0.12">
+    <path d="M 235 300 Q 245 290 255 300 Q 265 310 275 300"/>
+    <path d="M 220 285 Q 230 275 240 285 Q 250 295 260 285"/>
+    <path d="M 260 280 Q 270 270 280 280"/>
+  </g>
+
+  <!-- Small metric bars near the base -->
+  <g opacity="0.2">
+    <rect x="165" y="465" width="30" height="4" rx="2" fill="#ff8800"/>
+    <rect x="200" y="465" width="50" height="4" rx="2" fill="#ff8800"/>
+    <rect x="255" y="465" width="20" height="4" rx="2" fill="#ff8800"/>
+    <rect x="280" y="465" width="40" height="4" rx="2" fill="#ff8800"/>
+    <rect x="325" y="465" width="25" height="4" rx="2" fill="#ff8800"/>
+  </g>
+
+  <!-- === RIGHT SIDE: Text === -->
+
+  <!-- Tool name -->
+  <text x="540" y="250" font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="72" font-weight="700" fill="#ff8800" letter-spacing="-2">
+    evalforge
+  </text>
+
+  <!-- Underline accent -->
+  <rect x="540" y="268" width="170" height="3" rx="1.5" fill="#ff8800" opacity="0.5"/>
+
+  <!-- Tagline -->
+  <text x="540" y="315" font-family="-apple-system, 'Segoe UI', Helvetica, sans-serif" font-size="24" fill="#cccccc" letter-spacing="0.5">
+    Agent evaluation harness with CI integration
+  </text>
+
+  <!-- Stats -->
+  <g font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="15" fill="#666666">
+    <circle cx="548" cy="380" r="3" fill="#ff8800" opacity="0.6"/>
+    <text x="560" y="384">7 Scoring Strategies</text>
+    <circle cx="548" cy="412" r="3" fill="#ff8800" opacity="0.6"/>
+    <text x="560" y="416">CLI Ready</text>
+    <circle cx="548" cy="444" r="3" fill="#ff8800" opacity="0.6"/>
+    <text x="560" y="448">Regression Detection</text>
+  </g>
+
+  <!-- Separator -->
+  <line x1="540" y1="490" x2="1100" y2="490" stroke="#1a1a1a" stroke-width="1"/>
+
+  <!-- Footer -->
+  <text x="540" y="530" font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="14" fill="#444444" letter-spacing="2">
+    speed785.github.io
+  </text>
+
+  <!-- Corner decorations -->
+  <g stroke="#ff8800" stroke-width="1" opacity="0.2">
+    <path d="M 20 20 L 20 50"/>
+    <path d="M 20 20 L 50 20"/>
+    <path d="M 1260 20 L 1260 50"/>
+    <path d="M 1260 20 L 1230 20"/>
+    <path d="M 20 620 L 20 590"/>
+    <path d="M 20 620 L 50 620"/>
+    <path d="M 1260 620 L 1260 590"/>
+    <path d="M 1260 620 L 1230 620"/>
+  </g>
+
+  <!-- Noise overlay -->
+  <rect width="1280" height="640" filter="url(#noise)" opacity="0.5"/>
+</svg>
