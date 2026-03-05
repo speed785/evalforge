@@ -1,9 +1,15 @@
-from setuptools import setup, find_packages
+from pathlib import Path
 
-with open("../README.md", "r", encoding="utf-8") as f:
-    long_description = f.read()
+from setuptools import find_packages, setup
 
-setup(
+root = Path(__file__).resolve().parents[1]
+readme_path = root / "README.md"
+if readme_path.exists():
+    long_description = readme_path.read_text(encoding="utf-8")
+else:
+    long_description = "Agent Evaluation Harness — repeatable, measurable evals for AI agents"
+
+_ = setup(
     name="evalforge",
     version="0.1.0",
     author="EvalForge Contributors",
@@ -38,6 +44,21 @@ setup(
         "Programming Language :: Python :: 3.12",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Topic :: Software Development :: Testing",
+    ],
+    keywords=[
+        "ai",
+        "agent",
+        "llm",
+        "evaluation",
+        "evals",
+        "testing",
+        "benchmarking",
+        "regression",
+        "openai",
+        "anthropic",
+        "ci",
+        "quality-assurance",
+        "llm-eval",
     ],
     entry_points={
         "console_scripts": [

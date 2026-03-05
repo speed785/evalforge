@@ -45,16 +45,24 @@
     "type": "git",
     "url": "https://github.com/speed785/evalforge"
   },
+  "homepage": "https://github.com/speed785/evalforge#readme",
+  "bugs": {
+    "url": "https://github.com/speed785/evalforge/issues"
+  },
   "keywords": [
     "ai",
-    "agents",
+    "agent",
+    "llm",
     "evaluation",
     "evals",
-    "benchmarking",
     "testing",
-    "llm",
+    "benchmarking",
+    "regression",
     "openai",
-    "anthropic"
+    "anthropic",
+    "ci",
+    "quality-assurance",
+    "llm-eval"
   ],
   "license": "MIT",
   "engines": {
