@@ -24,7 +24,16 @@ Quick start::
 
 from .harness import EvalHarness
 from .test_case import ScoringCriteria, SuiteResult, TestCase, TestResult
-from .scorer import Scorer, exact_match, fuzzy_match, contains_match, json_match, llm_judge, custom_scorer
+from .scorer import (
+    Scorer,
+    exact_match,
+    fuzzy_match,
+    contains_match,
+    json_match,
+    llm_judge,
+    semantic_match,
+    custom_scorer,
+)
 from .runner import Runner
 from .reporter import print_report, to_json, save_json, to_html, save_html, RegressionTracker
 from .registry import Registry, registry
@@ -45,6 +54,7 @@ __all__ = [
     "contains_match",
     "json_match",
     "llm_judge",
+    "semantic_match",
     "custom_scorer",
     # Runner
     "Runner",

@@ -8,7 +8,12 @@ LLM-as-judge, and custom scoring functions.
 from __future__ import annotations
 
 import json
+import hashlib
+import importlib
+import inspect
 import logging
+import math
+import warnings
 from typing import Any, Callable, Optional
 
 from .test_case import ScoringCriteria
@@ -24,13 +29,14 @@ logger = logging.getLogger(__name__)
 class Scorer:
     """Dispatches to the correct scoring strategy based on ScoringCriteria."""
 
-    def __init__(self, llm_judge_fn: Optional[Callable] = None):
+    def __init__(self, llm_judge_fn: Optional[Callable[[str, Any, Any], Any]] = None):
         """
         Args:
             llm_judge_fn: An async callable ``(prompt, expected, actual) -> float``
                           used when strategy is 'llm_judge'.
         """
         self._llm_judge_fn = llm_judge_fn
+        self._embedding_cache: dict[str, list[float]] = {}
 
     async def score(
         self,
@@ -51,13 +57,15 @@ class Scorer:
             return _json_match(expected, actual, criteria.json_ignore_keys)
         elif strategy == "llm_judge":
             return await self._llm_judge(criteria, expected, actual)
+        elif strategy == "semantic":
+            return await self._semantic_similarity(criteria, expected, actual)
         elif strategy == "custom":
             if criteria.scorer_fn is None:
                 raise ValueError("ScoringCriteria.scorer_fn must be set for 'custom' strategy")
             result = criteria.scorer_fn(expected, actual)
             # Support sync functions that return a float
-            if hasattr(result, "__await__"):
-                result = await result
+            if inspect.isawaitable(result):
+                return float(await result)
             return float(result)
         else:
             raise ValueError(f"Unknown scoring strategy: {strategy!r}")
@@ -76,6 +84,45 @@ class Scorer:
         prompt = criteria.llm_judge_prompt or _default_judge_prompt(expected, actual)
         return await self._llm_judge_fn(prompt, expected, actual)
 
+    async def _semantic_similarity(
+        self,
+        criteria: ScoringCriteria,
+        expected: Any,
+        actual: Any,
+    ) -> float:
+        try:
+            openai_module = importlib.import_module("openai")
+            AsyncOpenAI = getattr(openai_module, "AsyncOpenAI")
+        except ImportError:
+            warnings.warn(
+                "openai not installed, semantic scoring skipped. Install with: pip install openai",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            return 0.0
+
+        model = getattr(criteria, "semantic_model", None) or "text-embedding-3-small"
+        expected_text = str(expected)
+        actual_text = str(actual)
+
+        expected_embedding = await self._embed_text(AsyncOpenAI, expected_text, model)
+        actual_embedding = await self._embed_text(AsyncOpenAI, actual_text, model)
+        if not expected_embedding or not actual_embedding:
+            return 0.0
+        return _cosine_similarity(expected_embedding, actual_embedding)
+
+    async def _embed_text(self, openai_client_cls: Any, text: str, model: str) -> list[float]:
+        key = hashlib.sha256(f"{model}:{text}".encode("utf-8")).hexdigest()
+        cached = self._embedding_cache.get(key)
+        if cached is not None:
+            return cached
+
+        client = openai_client_cls()
+        response = await client.embeddings.create(model=model, input=text)
+        embedding = response.data[0].embedding
+        self._embedding_cache[key] = embedding
+        return embedding
+
 
 # ---------------------------------------------------------------------------
 # Strategy implementations
@@ -92,15 +139,17 @@ def _exact(expected: Any, actual: Any) -> float:
 def _fuzzy(expected: Any, actual: Any, method: str = "token_sort_ratio") -> float:
     """Fuzzy string similarity using rapidfuzz (falls back to exact if unavailable)."""
     try:
-        from rapidfuzz import fuzz
+        rapidfuzz_module = importlib.import_module("rapidfuzz")
+        fuzz = getattr(rapidfuzz_module, "fuzz")
 
         scorer_fn = getattr(fuzz, method, fuzz.token_sort_ratio)
         score = scorer_fn(str(expected), str(actual))
         return score / 100.0
     except ImportError:
-        logger.warning(
-            "rapidfuzz not installed — falling back to exact match for fuzzy scoring. "
-            "Install with: pip install rapidfuzz"
+        warnings.warn(
+            "rapidfuzz not installed, falling back to exact match. Install with: pip install rapidfuzz",
+            RuntimeWarning,
+            stacklevel=2,
         )
         return _exact(expected, actual)
 
@@ -167,6 +216,17 @@ def _default_judge_prompt(expected: Any, actual: Any) -> str:
     )
 
 
+def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
+    if len(vec_a) != len(vec_b):
+        return 0.0
+    dot = sum(a * b for a, b in zip(vec_a, vec_b))
+    norm_a = math.sqrt(sum(a * a for a in vec_a))
+    norm_b = math.sqrt(sum(b * b for b in vec_b))
+    if norm_a == 0.0 or norm_b == 0.0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
 # ---------------------------------------------------------------------------
 # Convenience constructors
 # ---------------------------------------------------------------------------
@@ -198,6 +258,13 @@ def llm_judge(prompt: str | None = None, threshold: float = 0.7) -> ScoringCrite
         threshold=threshold,
         llm_judge_prompt=prompt,
     )
+
+
+def semantic_match(
+    threshold: float = 0.85,
+    model: str = "text-embedding-3-small",
+) -> ScoringCriteria:
+    return ScoringCriteria(strategy="semantic", threshold=threshold, semantic_model=model)
 
 
 def custom_scorer(fn: Callable[[Any, Any], float], threshold: float = 0.5) -> ScoringCriteria:

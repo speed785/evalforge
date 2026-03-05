@@ -26,6 +26,7 @@ class ScoringCriteria:
       - 'llm_judge'   : use an LLM to judge correctness
       - 'custom'      : provide a custom scorer_fn
       - 'json_match'  : deep compare JSON structures
+      - 'semantic'    : embedding cosine similarity (optional openai)
     """
 
     threshold: float = 1.0
@@ -42,6 +43,9 @@ class ScoringCriteria:
 
     json_ignore_keys: list[str] = field(default_factory=list)
     """Keys to ignore when comparing JSON structures."""
+
+    semantic_model: str = "text-embedding-3-small"
+    """Embedding model to use for semantic similarity scoring."""
 
 
 @dataclass
