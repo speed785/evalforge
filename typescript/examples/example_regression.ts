@@ -7,9 +7,9 @@
  *   npx ts-node --esm examples/example_regression.ts
  */
 
-import { EvalHarness, TestCase, registry } from "../src/index.js";
-import { RegressionTracker } from "../src/reporter.js";
-import { fuzzyMatch, containsMatch } from "../src/scorer.js";
+import { EvalHarness, TestCase, registry, suiteStats } from "../dist/index.js";
+import { RegressionTracker } from "../dist/reporter.js";
+import { fuzzyMatch, containsMatch } from "../dist/scorer.js";
 import { mkdirSync } from "fs";
 
 // ---------------------------------------------------------------------------
@@ -129,9 +129,10 @@ async function main() {
   const history = tracker.loadHistory("customer-support");
   console.log(`History (${history.length} runs):`);
   for (const h of history) {
-    const total = (h as { results: { passed: boolean }[] }).results.length;
-    const passed = (h as { results: { passed: boolean }[] }).results.filter((r) => r.passed).length;
-    console.log(`  run_id=${(h as { runId: string }).runId}  pass_rate=${(passed / total * 100).toFixed(1)}%  passed=${passed}/${total}`);
+    const stats = suiteStats(h);
+    console.log(
+      `  run_id=${h.runId}  pass_rate=${(stats.passRate * 100).toFixed(1)}%  passed=${stats.passed}/${stats.total}`
+    );
   }
 
   const passRate = result2.results.filter((r) => r.passed).length / result2.results.length;

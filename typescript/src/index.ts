@@ -25,6 +25,7 @@ export {
   containsMatch,
   jsonMatch,
   llmJudge,
+  semanticMatch,
   customScorer,
 } from "./scorer.js";
 

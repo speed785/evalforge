@@ -3,6 +3,7 @@
  */
 
 import { ScoringCriteria } from "./testCase.js";
+import { createHash } from "crypto";
 
 export type LLMJudgeFn = (
   prompt: string,
@@ -15,6 +16,8 @@ export type LLMJudgeFn = (
 // ---------------------------------------------------------------------------
 
 export class Scorer {
+  private embeddingCache = new Map<string, number[]>();
+
   constructor(private llmJudgeFn?: LLMJudgeFn) {}
 
   async score(
@@ -33,6 +36,8 @@ export class Scorer {
         return jsonMatchScore(expected, actual, criteria.jsonIgnoreKeys ?? []);
       case "llm_judge":
         return this.llmJudge(criteria, expected, actual);
+      case "semantic":
+        return this.semanticScore(criteria, expected, actual);
       case "custom":
         if (!criteria.scorerFn) {
           throw new Error(
@@ -59,6 +64,48 @@ export class Scorer {
     const prompt =
       criteria.llmJudgePrompt ?? defaultJudgePrompt(expected, actual);
     return this.llmJudgeFn(prompt, expected, actual);
+  }
+
+  private async semanticScore(
+    criteria: ScoringCriteria,
+    expected: unknown,
+    actual: unknown
+  ): Promise<number> {
+    const model = criteria.semanticModel ?? "text-embedding-3-small";
+    const expectedText = String(expected);
+    const actualText = String(actual);
+
+    let OpenAI: new (opts?: { apiKey?: string }) => {
+      embeddings: { create: (args: { model: string; input: string }) => Promise<{ data: Array<{ embedding: number[] }> }> };
+    };
+    try {
+      ({ default: OpenAI } = await import("openai"));
+    } catch {
+      console.warn("openai not installed, semantic scoring skipped. Install with: npm install openai");
+      return 0;
+    }
+
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const expectedEmbedding = await this.getEmbedding(client, expectedText, model);
+    const actualEmbedding = await this.getEmbedding(client, actualText, model);
+    return cosineSimilarity(expectedEmbedding, actualEmbedding);
+  }
+
+  private async getEmbedding(
+    client: { embeddings: { create: (args: { model: string; input: string }) => Promise<{ data: Array<{ embedding: number[] }> }> } },
+    text: string,
+    model: string
+  ): Promise<number[]> {
+    const key = createHash("sha256").update(`${model}:${text}`).digest("hex");
+    const cached = this.embeddingCache.get(key);
+    if (cached) {
+      return cached;
+    }
+
+    const response = await client.embeddings.create({ model, input: text });
+    const embedding = response.data[0]?.embedding ?? [];
+    this.embeddingCache.set(key, embedding);
+    return embedding;
   }
 }
 
@@ -166,6 +213,24 @@ function defaultJudgePrompt(expected: unknown, actual: unknown): string {
   );
 }
 
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length === 0 || b.length === 0 || a.length !== b.length) {
+    return 0;
+  }
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  if (normA === 0 || normB === 0) {
+    return 0;
+  }
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
 // ---------------------------------------------------------------------------
 // Convenience constructors
 // ---------------------------------------------------------------------------
@@ -201,6 +266,15 @@ export const llmJudge = (
   strategy: "llm_judge",
   threshold,
   llmJudgePrompt: prompt,
+});
+
+export const semanticMatch = (
+  threshold = 0.85,
+  model = "text-embedding-3-small"
+): ScoringCriteria => ({
+  strategy: "semantic",
+  threshold,
+  semanticModel: model,
 });
 
 export const customScorer = (

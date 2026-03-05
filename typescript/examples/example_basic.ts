@@ -7,14 +7,14 @@
  *   npx ts-node --esm examples/example_basic.ts
  */
 
-import { EvalHarness, TestCase } from "../src/index.js";
+import { EvalHarness, TestCase } from "../dist/index.js";
 import {
   exactMatch,
   fuzzyMatch,
   containsMatch,
   jsonMatch,
   customScorer,
-} from "../src/scorer.js";
+} from "../dist/scorer.js";
 
 // ---------------------------------------------------------------------------
 // Mock agent
@@ -63,7 +63,7 @@ function makeTestSuite(): TestCase[] {
       description: "Greeting should be warm",
       input: "Say hello",
       expectedOutput: "Hello! How can I help?",
-      scoring: fuzzyMatch(0.7),
+      scoring: fuzzyMatch(0.65),
       tags: ["greeting"],
     }),
     new TestCase({

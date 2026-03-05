@@ -17,6 +17,7 @@ export type ScoringStrategy =
   | "contains"
   | "json_match"
   | "llm_judge"
+  | "semantic"
   | "custom";
 
 export interface ScoringCriteria {
@@ -32,6 +33,7 @@ export interface ScoringCriteria {
   jsonIgnoreKeys?: string[];
   /** Fuzzy similarity threshold method hint (not used in TS — uses built-in). */
   fuzzyMethod?: string;
+  semanticModel?: string;
 }
 
 // ---------------------------------------------------------------------------

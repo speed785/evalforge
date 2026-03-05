@@ -54,7 +54,7 @@ export class AnthropicAgent {
     const client = new Anthropic({ apiKey: this.opts.apiKey });
     const messages = this.buildMessages(input);
 
-    const params: Parameters<typeof client.messages.create>[0] = {
+    const params: Record<string, unknown> = {
       model: this.opts.model,
       messages,
       max_tokens: this.opts.maxTokens,
