@@ -24,7 +24,15 @@ jobs:
           pip install pytest pytest-cov
       - name: Run test suite with coverage gate
         working-directory: ./python
-        run: pytest --cov=evalforge --cov-report=term-missing --cov-fail-under=80
+        run: pytest --cov=evalforge --cov-report=term-missing --cov-report=xml:../coverage.xml --cov-fail-under=80
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
 
   typescript:
     runs-on: ubuntu-latest
