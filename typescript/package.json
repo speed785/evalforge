@@ -22,6 +22,10 @@
       "import": "./dist/registry.js",
       "types": "./dist/registry.d.ts"
     },
+    "./observability": {
+      "import": "./dist/observability.js",
+      "types": "./dist/observability.d.ts"
+    },
     "./integrations/openai": {
       "import": "./dist/integrations/openai.js",
       "types": "./dist/integrations/openai.d.ts"

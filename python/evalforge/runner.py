@@ -9,8 +9,9 @@ import asyncio
 import inspect
 import logging
 import time
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 
+from .observability import EvalLogger
 from .scorer import Scorer
 from .test_case import ScoringCriteria, SuiteResult, TestCase, TestResult
 
@@ -38,6 +39,8 @@ class Runner:
         concurrency: int = 1,
         scorer: Optional[Scorer] = None,
         on_result: Optional[Callable[[TestResult], None]] = None,
+        eval_logger: Optional[EvalLogger] = None,
+        debug: bool = False,
     ):
         """
         Args:
@@ -57,6 +60,8 @@ class Runner:
         self.concurrency = concurrency
         self.scorer = scorer or Scorer()
         self.on_result = on_result
+        self.eval_logger = eval_logger
+        self.debug = debug
 
     # ------------------------------------------------------------------
     # Public API
@@ -104,13 +109,17 @@ class Runner:
         timeout = tc.timeout_seconds if tc.timeout_seconds is not None else self.default_timeout
         max_retries = tc.max_retries if tc.max_retries else self.default_retries
         retries = 0
+        scorer_type = tc.scoring.strategy
+
+        if self.eval_logger:
+            self.eval_logger.test_started(test_name=tc.id, scorer_type=scorer_type)
 
         # Setup hook
         if tc.setup:
             try:
                 result = tc.setup()
                 if inspect.isawaitable(result):
-                    await result
+                    await cast(Any, result)
             except Exception as exc:
                 logger.warning("Setup failed for %s: %s", tc.id, exc)
 
@@ -140,13 +149,19 @@ class Runner:
         # Teardown hook
         if tc.teardown:
             try:
-                result = tc.teardown(actual_output)
+                result = cast(Callable[[Any], Any], tc.teardown)(actual_output)
                 if inspect.isawaitable(result):
-                    await result
+                    await cast(Any, result)
             except Exception as exc:
                 logger.warning("Teardown failed for %s: %s", tc.id, exc)
 
         if last_error:
+            debug_breakdown = self._debug_breakdown(
+                tc=tc,
+                score=0.0,
+                passed=False,
+                reason=last_error,
+            )
             test_result = TestResult(
                 test_case_id=tc.id,
                 passed=False,
@@ -155,10 +170,34 @@ class Runner:
                 error=last_error,
                 latency_ms=latency_ms,
                 retries=retries - 1,
+                metadata={
+                    "scorer_type": scorer_type,
+                    "debug_breakdown": debug_breakdown,
+                },
             )
+            if self.eval_logger:
+                self.eval_logger.test_failed(
+                    test_name=tc.id,
+                    score=0.0,
+                    latency_ms=latency_ms,
+                    scorer_type=scorer_type,
+                    error=last_error,
+                    debug_breakdown=debug_breakdown,
+                )
         else:
             score = await self._score(tc.scoring, tc.expected_output, actual_output)
             passed = score >= tc.scoring.threshold
+            reason = (
+                f"score {score:.3f} >= threshold {tc.scoring.threshold:.3f}"
+                if passed
+                else f"score {score:.3f} < threshold {tc.scoring.threshold:.3f}"
+            )
+            debug_breakdown = self._debug_breakdown(
+                tc=tc,
+                score=score,
+                passed=passed,
+                reason=reason,
+            )
             test_result = TestResult(
                 test_case_id=tc.id,
                 passed=passed,
@@ -166,7 +205,28 @@ class Runner:
                 actual_output=actual_output,
                 latency_ms=latency_ms,
                 retries=retries,
+                metadata={
+                    "scorer_type": scorer_type,
+                    "debug_breakdown": debug_breakdown,
+                },
             )
+            if self.eval_logger:
+                self.eval_logger.test_completed(
+                    test_name=tc.id,
+                    score=score,
+                    passed=passed,
+                    latency_ms=latency_ms,
+                    scorer_type=scorer_type,
+                    debug_breakdown=debug_breakdown,
+                )
+                if not passed:
+                    self.eval_logger.test_failed(
+                        test_name=tc.id,
+                        score=score,
+                        latency_ms=latency_ms,
+                        scorer_type=scorer_type,
+                        debug_breakdown=debug_breakdown,
+                    )
 
         if self.on_result:
             self.on_result(test_result)
@@ -191,3 +251,21 @@ class Runner:
         except Exception as exc:
             logger.error("Scoring failed: %s", exc)
             return 0.0
+
+    def _debug_breakdown(
+        self,
+        tc: TestCase,
+        score: float,
+        passed: bool,
+        reason: str,
+    ) -> dict[str, Any] | None:
+        if not self.debug:
+            return None
+        return {
+            "strategy": tc.scoring.strategy,
+            "threshold": tc.scoring.threshold,
+            "score": score,
+            "passed": passed,
+            "reason": reason,
+            "expected": str(tc.expected_output),
+        }

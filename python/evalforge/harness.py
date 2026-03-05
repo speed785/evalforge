@@ -29,6 +29,7 @@ import logging
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from .observability import EvalLogger, EvalMetrics, WebhookNotifier
 from .reporter import RegressionTracker, print_report, save_html, save_json
 from .runner import Runner
 from .scorer import Scorer
@@ -47,7 +48,7 @@ class EvalHarness:
 
     def __init__(
         self,
-        agent: Callable,
+        agent: Callable[..., Any],
         suite_name: str = "eval",
         *,
         default_timeout: float = 30.0,
@@ -56,7 +57,11 @@ class EvalHarness:
         scorer: Optional[Scorer] = None,
         history_path: Optional[str | Path] = None,
         verbose: bool = True,
-        on_result: Optional[Callable] = None,
+        on_result: Optional[Callable[..., Any]] = None,
+        debug: bool = False,
+        eval_logger: Optional[EvalLogger] = None,
+        webhook_notifier: Optional[WebhookNotifier] = None,
+        webhook_url: Optional[str] = None,
     ):
         """
         Args:
@@ -73,7 +78,10 @@ class EvalHarness:
         self.suite_name = suite_name
         self.test_cases: list[TestCase] = []
         self.verbose = verbose
+        self.debug = debug
         self._history_path = history_path
+        self._eval_logger = eval_logger or EvalLogger(suite_name=suite_name)
+        self._webhook_notifier = webhook_notifier or WebhookNotifier(webhook_url)
 
         self._runner = Runner(
             agent=agent,
@@ -83,6 +91,8 @@ class EvalHarness:
             concurrency=concurrency,
             scorer=scorer or Scorer(),
             on_result=on_result,
+            eval_logger=self._eval_logger,
+            debug=debug,
         )
 
         self._tracker = RegressionTracker(history_path) if history_path else None
@@ -132,6 +142,8 @@ class EvalHarness:
         if not cases:
             logger.warning("No test cases to run.")
 
+        self._eval_logger.suite_started(total_tests=len(cases), metadata=metadata)
+
         result = asyncio.run(self._runner.run(cases, metadata))
         self._post_run(result, report_json, report_html)
         return result
@@ -148,6 +160,8 @@ class EvalHarness:
         if not cases:
             logger.warning("No test cases to run.")
 
+        self._eval_logger.suite_started(total_tests=len(cases), metadata=metadata)
+
         result = await self._runner.run(cases, metadata)
         self._post_run(result, report_json, report_html)
         return result
@@ -162,8 +176,13 @@ class EvalHarness:
         report_json: Optional[str | Path],
         report_html: Optional[str | Path],
     ) -> None:
+        regressions: list[str] = []
+
         if self.verbose:
             print_report(result)
+
+        if self.debug:
+            self._print_debug_breakdown(result)
 
         if report_json:
             path = save_json(result, report_json)
@@ -183,3 +202,32 @@ class EvalHarness:
                 )
                 if self.verbose:
                     print(f"\n⚠  Regressions detected: {', '.join(regressions)}")
+
+        metrics = EvalMetrics.from_suite(
+            result,
+            total_runs=1,
+            regression_count=len(regressions),
+        )
+        self._eval_logger.suite_completed(metrics)
+
+        if regressions:
+            self._eval_logger.regression_detected(regressions, metrics)
+            _ = self._webhook_notifier.notify_regression(
+                suite_name=result.suite_name,
+                regressions=regressions,
+                metrics=metrics,
+            )
+
+    def _print_debug_breakdown(self, result: SuiteResult) -> None:
+        print("\n[evalforge debug] per-test scoring breakdown")
+        for test_result in result.results:
+            debug_breakdown = test_result.metadata.get("debug_breakdown") if test_result.metadata else None
+            if not debug_breakdown:
+                continue
+            reason = debug_breakdown.get("reason", "")
+            strategy = debug_breakdown.get("strategy", "unknown")
+            threshold = debug_breakdown.get("threshold", "n/a")
+            print(
+                f"- {test_result.test_case_id}: strategy={strategy} score={test_result.score:.3f} "
+                f"threshold={threshold} passed={test_result.passed} reason={reason}"
+            )

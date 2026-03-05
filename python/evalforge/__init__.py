@@ -37,6 +37,7 @@ from .scorer import (
 from .runner import Runner
 from .reporter import print_report, to_json, save_json, to_html, save_html, RegressionTracker
 from .registry import Registry, registry
+from .observability import EvalLogger, EvalMetrics, WebhookNotifier
 
 __version__ = "0.1.0"
 
@@ -65,6 +66,9 @@ __all__ = [
     "to_html",
     "save_html",
     "RegressionTracker",
+    "EvalLogger",
+    "EvalMetrics",
+    "WebhookNotifier",
     # Registry
     "Registry",
     "registry",

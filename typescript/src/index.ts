@@ -42,3 +42,11 @@ export {
 } from "./reporter.js";
 
 export { Registry, registry } from "./registry.js";
+
+export {
+  EvalLogger,
+  WebhookNotifier,
+  buildEvalMetrics,
+  exportPrometheus,
+} from "./observability.js";
+export type { EvalEvent, EvalMetrics } from "./observability.js";
