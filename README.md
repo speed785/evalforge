@@ -3,11 +3,13 @@
   <h1>evalforge</h1>
   <p><strong>Agent evaluation harness — repeatable evals, regression detection, CI-ready</strong></p>
 
-  [![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python)](python/)
-  [![TypeScript](https://img.shields.io/badge/typescript-5.4%2B-blue?logo=typescript)](typescript/)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-  [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)]()
-  [![Status: Alpha](https://img.shields.io/badge/status-alpha-orange.svg)]()
+  [![CI](https://github.com/speed785/evalforge/actions/workflows/ci.yml/badge.svg)](https://github.com/speed785/evalforge/actions/workflows/ci.yml)
+  [![Coverage](https://codecov.io/gh/speed785/evalforge/branch/main/graph/badge.svg)](https://codecov.io/gh/speed785/evalforge)
+  [![PyPI](https://img.shields.io/pypi/v/evalforge)](https://pypi.org/project/evalforge/)
+  [![npm](https://img.shields.io/npm/v/evalforge)](https://www.npmjs.com/package/evalforge)
+  [![Python](https://img.shields.io/badge/python-3.9+-blue)](https://python.org)
+  [![TypeScript](https://img.shields.io/badge/typescript-5.0+-blue)](https://typescriptlang.org)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
   [Quick Start](#quick-start) · [Scoring Strategies](#scoring-strategies) · [CLI](#cli-usage) · [CI/CD](#cicd-integration) · [API Reference](#api-reference)
 </div>
