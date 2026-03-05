@@ -2,6 +2,8 @@ import asyncio
 import io
 import json
 import logging
+from typing import Any
+from urllib.error import URLError
 
 from evalforge.harness import EvalHarness
 from evalforge.observability import EvalLogger, EvalMetrics, WebhookNotifier
@@ -88,3 +90,50 @@ def test_harness_triggers_webhook_when_regression_detected(tmp_path):
     suite_name, regressions, _metrics = notifier.calls[0]
     assert suite_name == "regression-suite"
     assert regressions == ["case"]
+
+
+def test_webhook_notifier_success_and_error_paths(monkeypatch):
+    metrics = EvalMetrics(
+        total_runs=1,
+        total_tests=1,
+        pass_rate=0.5,
+        avg_latency_ms=1.0,
+        p95_latency_ms=1.0,
+        regression_count=1,
+        llm_judge_calls=0,
+        llm_judge_cost_estimate=0.0,
+    )
+
+    captured: dict[str, Any] = {"request": None}
+
+    class _Ctx:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    def fake_urlopen(req, timeout):
+        captured["request"] = (req, timeout)
+        return _Ctx()
+
+    monkeypatch.setattr("evalforge.observability.urlopen", fake_urlopen)
+
+    notifier = WebhookNotifier("https://example.com/webhook", timeout_seconds=2.5)
+    assert notifier.enabled is True
+    assert notifier.notify_regression("suite", ["a"], metrics) is True
+    assert captured["request"][1] == 2.5
+
+    monkeypatch.setattr("evalforge.observability.urlopen", lambda *_args, **_kwargs: (_ for _ in ()).throw(URLError("down")))
+    assert notifier.notify_regression("suite", ["a"], metrics) is False
+
+    disabled = WebhookNotifier(None)
+    assert disabled.enabled is False
+    assert disabled.notify_regression("suite", ["a"], metrics) is False
+
+
+def test_percentile_single_value_branch():
+    from evalforge import observability as obs
+
+    assert obs._percentile([], 95.0) == 0.0
+    assert obs._percentile([7.0], 95.0) == 7.0

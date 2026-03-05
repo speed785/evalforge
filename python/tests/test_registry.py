@@ -25,3 +25,30 @@ def test_registry_missing_items_raise():
         reg.get_suite("missing")
     with pytest.raises(KeyError):
         reg.get_agent("missing")
+
+
+def test_registry_decorator_registration_and_override():
+    reg = Registry()
+
+    @reg.suite("decorated")
+    def suite_one():
+        return [TestCase(id="one", input="x", expected_output="ok", scoring=exact_match())]
+
+    @reg.suite("decorated")
+    def suite_two():
+        return [TestCase(id="two", input="x", expected_output="ok", scoring=exact_match())]
+
+    @reg.agent("agent")
+    async def agent_one(_x):
+        return "ok"
+
+    @reg.agent("agent")
+    async def agent_two(_x):
+        return "ok"
+
+    assert suite_one.__name__ == "suite_one"
+    assert agent_one.__name__ == "agent_one"
+    assert reg.get_suite("decorated")[0].id == "two"
+
+    result = asyncio.run(reg.run("decorated", "agent"))
+    assert result.passed == 1

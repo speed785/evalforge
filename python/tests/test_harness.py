@@ -1,6 +1,8 @@
 import asyncio
+import logging
 
 from evalforge import EvalHarness, TestCase
+from evalforge.test_case import SuiteResult, TestResult
 from evalforge.scorer import contains_match, exact_match
 
 
@@ -43,3 +45,50 @@ def test_harness_run_async_and_filtering():
     result = asyncio.run(harness.run_async(tags=["y"]))
     assert result.total == 1
     assert result.results[0].test_case_id == "b"
+
+
+def test_harness_empty_cases_and_debug_output(caplog, capsys):
+    async def agent(_prompt: str) -> str:
+        return "ok"
+
+    harness = EvalHarness(agent=agent, suite_name="empty", verbose=True, debug=True)
+
+    caplog.set_level(logging.WARNING)
+    sync_result = harness.run()
+    assert sync_result.total == 0
+    assert any("No test cases to run" in rec.message for rec in caplog.records)
+
+    caplog.clear()
+    async_result = asyncio.run(harness.run_async())
+    assert async_result.total == 0
+    assert any("No test cases to run" in rec.message for rec in caplog.records)
+
+    fake_result = SuiteResult(
+        suite_name="empty",
+        results=[TestResult(test_case_id="x", passed=True, score=1.0, metadata={})],
+    )
+    harness._print_debug_breakdown(fake_result)
+    output = capsys.readouterr().out
+    assert "per-test scoring breakdown" in output
+
+
+def test_harness_verbose_regression_message(tmp_path, capsys):
+    responses = {"prompt": "ok"}
+
+    def agent(prompt: str) -> str:
+        return responses[prompt]
+
+    harness = EvalHarness(
+        agent=agent,
+        suite_name="reg",
+        history_path=tmp_path / "history.jsonl",
+        verbose=True,
+    )
+    harness.add(TestCase(id="x", input="prompt", expected_output="ok", scoring=contains_match()))
+
+    harness.run()
+    responses["prompt"] = "bad"
+    harness.run()
+
+    output = capsys.readouterr().out
+    assert "Regressions detected" in output

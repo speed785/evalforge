@@ -1,4 +1,6 @@
 import json
+import types
+from typing import Any, cast
 
 from evalforge import reporter
 from evalforge.reporter import RegressionTracker, save_html, save_json, to_html, to_json
@@ -41,6 +43,16 @@ def test_plain_cli_report(capsys, monkeypatch):
     assert "passed" in output
 
 
+def test_plain_report_with_latency(capsys):
+    suite = SuiteResult(
+        suite_name="lat",
+        results=[TestResult(test_case_id="a", passed=True, score=1.0, latency_ms=12)],
+    )
+    reporter._plain_report(suite, show_details=False)
+    output = capsys.readouterr().out
+    assert "Avg latency" in output
+
+
 def test_regression_tracker_detects_regressions(tmp_path):
     tracker = RegressionTracker(tmp_path / "history.jsonl")
     first = SuiteResult(
@@ -53,3 +65,61 @@ def test_regression_tracker_detects_regressions(tmp_path):
     )
     assert tracker.compare_and_save(first) == []
     assert tracker.compare_and_save(second) == ["x"]
+
+
+def test_html_edge_cases_and_tracker_invalid_lines(tmp_path):
+    empty_suite = SuiteResult(suite_name="empty", results=[])
+    html_empty = to_html(empty_suite)
+    assert "0.0%" in html_empty
+
+    all_fail = SuiteResult(
+        suite_name="all-fail",
+        results=[TestResult(test_case_id="f", passed=False, score=0.0, actual_output="bad")],
+    )
+    html_fail = to_html(all_fail)
+    assert "badge fail" in html_fail
+
+    all_pass = SuiteResult(
+        suite_name="all-pass",
+        results=[TestResult(test_case_id="p", passed=True, score=1.0, latency_ms=10)],
+    )
+    html_pass = to_html(all_pass)
+    assert "badge pass" in html_pass
+
+    history = tmp_path / "history.jsonl"
+    history.write_text("not-json\n\n" + json.dumps({"suite_name": "s", "results": []}) + "\n")
+    tracker = RegressionTracker(history)
+    assert tracker.load_history("s")
+
+
+def test_rich_report_path(monkeypatch):
+    captured = []
+
+    class FakeConsole:
+        def print(self, value=""):
+            captured.append(value)
+
+    class FakeTable:
+        def __init__(self, **_kwargs):
+            self.rows = []
+
+        def add_column(self, *_args, **_kwargs):
+            return None
+
+        def add_row(self, *args):
+            self.rows.append(args)
+
+    fake_rich = cast(Any, types.ModuleType("rich"))
+    fake_rich.box = types.SimpleNamespace(ROUNDED="rounded")
+    fake_console_mod = types.ModuleType("rich.console")
+    cast(Any, fake_console_mod).Console = FakeConsole
+    fake_table_mod = types.ModuleType("rich.table")
+    cast(Any, fake_table_mod).Table = FakeTable
+
+    monkeypatch.setitem(__import__("sys").modules, "rich", fake_rich)
+    monkeypatch.setitem(__import__("sys").modules, "rich.console", fake_console_mod)
+    monkeypatch.setitem(__import__("sys").modules, "rich.table", fake_table_mod)
+
+    suite = _suite()
+    reporter.print_report(suite)
+    assert any("EvalForge Report" in str(item) for item in captured)
