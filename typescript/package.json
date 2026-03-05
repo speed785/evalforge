@@ -1,0 +1,71 @@
+{
+  "name": "evalforge",
+  "version": "0.1.0",
+  "description": "Agent Evaluation Harness — repeatable, measurable evals for AI agents",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./scorer": {
+      "import": "./dist/scorer.js",
+      "types": "./dist/scorer.d.ts"
+    },
+    "./reporter": {
+      "import": "./dist/reporter.js",
+      "types": "./dist/reporter.d.ts"
+    },
+    "./registry": {
+      "import": "./dist/registry.js",
+      "types": "./dist/registry.d.ts"
+    },
+    "./integrations/openai": {
+      "import": "./dist/integrations/openai.js",
+      "types": "./dist/integrations/openai.d.ts"
+    },
+    "./integrations/anthropic": {
+      "import": "./dist/integrations/anthropic.js",
+      "types": "./dist/integrations/anthropic.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "example:basic": "node --loader ts-node/esm examples/example_basic.ts",
+    "example:regression": "node --loader ts-node/esm examples/example_regression.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/speed785/evalforge"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "evaluation",
+    "evals",
+    "benchmarking",
+    "testing",
+    "llm",
+    "openai",
+    "anthropic"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.0"
+  },
+  "peerDependencies": {
+    "openai": ">=1.0.0",
+    "@anthropic-ai/sdk": ">=0.25.0"
+  },
+  "peerDependenciesMeta": {
+    "openai": { "optional": true },
+    "@anthropic-ai/sdk": { "optional": true }
+  }
+}

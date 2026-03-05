@@ -1,0 +1,10 @@
+# Core (no hard dependencies beyond stdlib)
+aiohttp>=3.9
+
+# Optional but recommended
+rapidfuzz>=3.0       # fuzzy string matching
+rich>=13.0           # pretty CLI output
+
+# Integration extras (install as needed)
+# openai>=1.0
+# anthropic>=0.25
