@@ -38,8 +38,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "example:basic": "npm run build && ts-node-esm examples/example_basic.ts",
-    "example:regression": "npm run build && ts-node-esm examples/example_regression.ts"
+    "example:basic": "npm run build && node --loader ts-node/esm examples/example_basic.ts",
+    "example:regression": "npm run build && node --loader ts-node/esm examples/example_regression.ts"
   },
   "repository": {
     "type": "git",
