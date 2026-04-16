@@ -40,9 +40,9 @@ dependencies = ["aiohttp>=3.9"]
 [project.optional-dependencies]
 fuzzy = ["rapidfuzz>=3.0"]
 openai = ["openai>=1.0"]
-anthropic = ["anthropic>=0.25"]
+anthropic = ["anthropic>=0.95.0"]
 rich = ["rich>=13.0"]
-all = ["rapidfuzz>=3.0", "openai>=1.0", "anthropic>=0.25", "rich>=13.0"]
+all = ["rapidfuzz>=3.0", "openai>=1.0", "anthropic>=0.95.0", "rich>=13.0"]
 
 [project.urls]
 Homepage = "https://speed785.github.io/evalforge"
